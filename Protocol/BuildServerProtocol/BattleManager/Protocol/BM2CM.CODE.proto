@@ -1,0 +1,12 @@
+package Message.Server.BattleManager.Protocol.BM2CM;
+message MSG_BM2CM_HEARTBEAT {
+	required int32 serverId =  1;
+	required int32 subId =  2;
+}
+
+message MSG_BM2CM_REGISTER {
+	required int32 areaId =  1;
+	required int32 serverId =  2;
+	required int32 subId =  3;
+}
+
