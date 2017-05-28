@@ -6,7 +6,7 @@ namespace ServersCluster
     {
         static void Main(string[] args)
         {
-            //提交测试
+            //提交测试vs2017
             Console.WriteLine("-------------");
             float x = (float)0.49;
             Console.WriteLine("-----{0}-----",x);
