@@ -45,7 +45,7 @@ namespace IOCPLib
 
 
         /// <summary>  
-        /// 信号量 （Accepted数）
+        /// 限制访问接收连接的线程数，用来控制最大并发数
         /// </summary>  
         Semaphore _maxNumberAcceptedClients;
 
@@ -126,7 +126,6 @@ namespace IOCPLib
 
         #endregion
 
-
         #region Init
 
         /// <summary>  
@@ -148,7 +147,7 @@ namespace IOCPLib
                 readWriteEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(OnIOCompleted);
 
                 //readWriteEventArg.UserToken = new AsyncUserToken();  //frFRee: 不同
-                readWriteEventArg.UserToken =null;
+                readWriteEventArg.UserToken = null;
 
                 // assign a byte buffer from the buffer pool to the SocketAsyncEventArg object  
                 _bufferManager.SetBuffer(readWriteEventArg);
@@ -187,8 +186,8 @@ namespace IOCPLib
                     _listenSocket.Bind(localEndPoint);
                 }
                 // 开始监听  
-                //_listenSocket.Listen(100); //frFRee: 不同
-                _listenSocket.Listen(this._numConnections); 
+                //_listenSocket.Listen(100); //frTODO: 不同
+                _listenSocket.Listen(this._numConnections);
                 // 在监听Socket上投递一个接受请求。  
                 StartAccept(null);
             }
@@ -271,7 +270,7 @@ namespace IOCPLib
                         Log4Debug(String.Format("客户 {0} 连入, 共有 {1} 个连接。", s.RemoteEndPoint.ToString(), _numConnectedSockets));
 
                         // As soon as the client is connected, post a receive to the connection
-                        bool willRaiseEvent = e.AcceptSocket.ReceiveAsync(readEventArgs);  
+                        bool willRaiseEvent = e.AcceptSocket.ReceiveAsync(readEventArgs);
                         if (!willRaiseEvent)
                         {
                             ProcessReceive(readEventArgs);//投递接收请求
@@ -389,9 +388,47 @@ namespace IOCPLib
 
         #endregion
 
+        #region 接收队列执行回调
 
-        IList<ArraySegment<byte>> _sendStreams = new List<ArraySegment<byte>>();
-        IList<ArraySegment<byte>> _waitStreams = new List<ArraySegment<byte>>();
+        protected Queue<KeyValuePair<UInt32, MemoryStream>> m_msgQueue = new Queue<KeyValuePair<uint, MemoryStream>>();
+        protected Queue<KeyValuePair<UInt32, MemoryStream>> m_deal_msgQueue = new Queue<KeyValuePair<uint, MemoryStream>>();
+
+        public void OnProcessProtocal()
+        {
+            lock (m_msgQueue)
+            {
+                while (m_msgQueue.Count > 0)
+                {
+                    var msg = m_msgQueue.Dequeue();
+                    m_deal_msgQueue.Enqueue(msg);
+                }
+            }
+            while (m_deal_msgQueue.Count > 0)
+            {
+                var msg = m_deal_msgQueue.Dequeue();
+                OnResponse(msg.Key, msg.Value);
+            }
+        }
+
+        private void OnResponse(uint id, MemoryStream stream)
+        {
+            try
+            {
+                Response(id, stream);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("OnResponse:({0})[Error]{1}", id, e.ToString());
+            }
+        }
+        protected abstract void Response(uint id, MemoryStream stream);
+
+
+        #endregion
+
+
+        IList<MemoryStream> _sendStreams = new List<MemoryStream>();
+        IList<MemoryStream> _waitStreams = new List<MemoryStream>();
 
         public bool Send(MemoryStream stream)
         {
@@ -401,13 +438,25 @@ namespace IOCPLib
             {
                 return true;
             }
-            ArraySegment<byte> segment = new ArraySegment<byte>(stream.GetBuffer(), 0, (int)stream.Length);
+
             if (_sendStreams.Count == 0)
             {
-                _sendStreams.Add(segment);
+                _sendStreams.Add(stream);
                 try
                 {
-                    //_workSocket.BeginSend(_sendStreams, 0, new AsyncCallback(SendCallback), _workSocket);
+                    SocketAsyncEventArgs sendEventArgs = _readWritePool.Pop();
+                    Socket s = sendEventArgs.AcceptSocket;
+                    sendEventArgs.SetBuffer(stream.GetBuffer(), 0, (int)stream.Length);
+
+                    if (!s.SendAsync(sendEventArgs))//投递发送请求，这个函数有可能同步发送出去，这时返回false，并且不会引发SocketAsyncEventArgs.Completed事件  
+                    {
+                        // 同步发送时处理发送完成事件  
+                        ProcessSend(sendEventArgs);
+                    }
+                    else
+                    {
+                        CloseClientSocket(sendEventArgs);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -416,7 +465,7 @@ namespace IOCPLib
             }
             else
             {
-                _waitStreams.Add(segment);
+                _waitStreams.Add(stream);
             }
             return true;
         }
@@ -436,37 +485,11 @@ namespace IOCPLib
 
                 if (_sendStreams.Count == 0)
                 {
-                    _sendStreams.Add(arrHead);
-                    _sendStreams.Add(arrBody);
-                    try
-                    {
-                        //_workSocket.BeginSend(_sendStreams, SocketFlags.None, SendCallback, _workSocket);
-                    }
-                    catch (Exception e)
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    _waitStreams.Add(arrHead);
-                    _waitStreams.Add(arrBody);
-                }
-            }
-            return true;
-        }
-
-        public bool Send(ArraySegment<byte> head, ArraySegment<byte> body)
-        {
-            lock (this)
-            {
-                if (_sendStreams.Count == 0)
-                {
                     _sendStreams.Add(head);
                     _sendStreams.Add(body);
                     try
                     {
-                        //_workSocket.BeginSend(_sendStreams, SocketFlags.None, SendCallback, null);
+                        //_workSocket.BeginSend(_sendStreams, SocketFlags.None, SendCallback, _workSocket);
                     }
                     catch (Exception e)
                     {
@@ -481,6 +504,32 @@ namespace IOCPLib
             }
             return true;
         }
+
+        //public bool Send(ArraySegment<byte> head, ArraySegment<byte> body)
+        //{
+        //    lock (this)
+        //    {
+        //        if (_sendStreams.Count == 0)
+        //        {
+        //            _sendStreams.Add(head);
+        //            _sendStreams.Add(body);
+        //            try
+        //            {
+        //                //_workSocket.BeginSend(_sendStreams, SocketFlags.None, SendCallback, null);
+        //            }
+        //            catch (Exception e)
+        //            {
+        //                return false;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            _waitStreams.Add(head);
+        //            _waitStreams.Add(body);
+        //        }
+        //    }
+        //    return true;
+        //}
 
         #region 发送数据
 
@@ -511,7 +560,7 @@ namespace IOCPLib
                 }
             }
         }
-
+        
         /// <summary>  
         /// 同步的使用socket发送数据  
         /// </summary>  
@@ -552,7 +601,6 @@ namespace IOCPLib
             } while (sent < size);
         }
 
-
         /// <summary>  
         /// 发送完成时处理函数  
         /// </summary>  
@@ -572,41 +620,6 @@ namespace IOCPLib
         }
 
         #endregion
-
-        protected Queue<KeyValuePair<UInt32, MemoryStream>> m_msgQueue = new Queue<KeyValuePair<uint, MemoryStream>>();
-        protected Queue<KeyValuePair<UInt32, MemoryStream>> m_deal_msgQueue = new Queue<KeyValuePair<uint, MemoryStream>>();
-
-
-        public void OnProcessProtocal()
-        {
-            lock (m_msgQueue)
-            {
-                while (m_msgQueue.Count > 0)
-                {
-                    var msg = m_msgQueue.Dequeue();
-                    m_deal_msgQueue.Enqueue(msg);
-                }
-            }
-            while (m_deal_msgQueue.Count > 0)
-            {
-                var msg = m_deal_msgQueue.Dequeue();
-                OnResponse(msg.Key, msg.Value);
-            }
-        }
-
-        private void OnResponse(uint id, MemoryStream stream)
-        {
-            try
-            {
-                Response(id, stream);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("OnResponse:({0})[Error]{1}", id, e.ToString());
-            }
-        }
-        protected abstract void Response(uint id, MemoryStream stream);
-
 
 
 
@@ -641,8 +654,10 @@ namespace IOCPLib
             {
                 s.Close();
             }
-            Interlocked.Decrement(ref _numConnectedSockets);
-            _maxAcceptedClients.Release();
+
+            // decrement the counter keeping track of the total number of clients connected to the server Interlocked.Decrement(ref _numConnectedSockets);
+            _maxNumberAcceptedClients.Release();
+            // Free the SocketAsyncEventArg so they can be reused by another client
             _readWritePool.Push(e);//SocketAsyncEventArg 对象被释放，压入可重用队列。  
         }
         #endregion
@@ -673,9 +688,9 @@ namespace IOCPLib
                     try
                     {
                         Stop();
-                        if (_serverSock != null)
+                        if (_listenSocket != null)
                         {
-                            _serverSock = null;
+                            _listenSocket = null;
                         }
                     }
                     catch (SocketException ex)
