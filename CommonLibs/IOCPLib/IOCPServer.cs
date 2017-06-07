@@ -10,42 +10,46 @@ namespace IOCPLib
 {
     public abstract class IOCPServer : IDisposable
     {
-        const int opsToPreAlloc = 2;
+        const int opsToPreAlloc = 2; // read, write (don't alloc buffer space for accepts)
         #region Fields
         /// <summary>  
         /// 服务器程序允许的最大客户端连接数  
         /// </summary>  
-        private int _maxClient;
-
-        /// <summary>  
-        /// 监听Socket，用于接受客户端的连接请求  
-        /// </summary>  
-        private Socket _serverSock;
-
-        /// <summary>  
-        /// 当前的连接的客户端数  
-        /// </summary>  
-        private int _clientCount;
+        private int _numConnections;
 
         /// <summary>  
         /// 用于每个I/O Socket操作的缓冲区大小  
         /// </summary>  
-        private int _bufferSize = 1024;
+        private int _receiveBufferSize;
 
         /// <summary>  
-        /// 信号量  
-        /// </summary>  
-        Semaphore _maxAcceptedClients;
-
-        /// <summary>  
-        /// 缓冲区管理  
+        /// 可重用缓冲区 
         /// </summary>  
         BufferManager _bufferManager;
 
         /// <summary>  
+        /// 监听Socket，用于接受客户端的连接请求  
+        /// </summary>  
+        private Socket _listenSocket;
+
+        /// <summary>  
         /// 对象池  
         /// </summary>  
-        SocketAsyncEventArgsPool _objectPool;
+        SocketAsyncEventArgsPool _readWritePool;
+
+
+        /// <summary>  
+        /// 当前的连接的客户端数  
+        /// </summary>  
+        private int _numConnectedSockets;
+
+
+        /// <summary>  
+        /// 信号量 （Accepted数）
+        /// </summary>  
+        Semaphore _maxNumberAcceptedClients;
+
+
 
         private bool disposed = false;
 
@@ -108,21 +112,22 @@ namespace IOCPLib
             this.Port = listenPort;
             this.Encoding = Encoding.Default;
 
-            _maxClient = maxClient;
+            _numConnections = maxClient;
 
-            _serverSock = new Socket(localIPAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            _listenSocket = new Socket(localIPAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-            _bufferManager = new BufferManager(_bufferSize * _maxClient * opsToPreAlloc, _bufferSize);
+            _bufferManager = new BufferManager(_receiveBufferSize * _numConnections * opsToPreAlloc, _receiveBufferSize);
 
-            _objectPool = new SocketAsyncEventArgsPool(_maxClient);
+            _readWritePool = new SocketAsyncEventArgsPool(_numConnections);
 
-            _maxAcceptedClients = new Semaphore(_maxClient, _maxClient);
+            _maxNumberAcceptedClients = new Semaphore(_numConnections, _numConnections);
         }
+
 
         #endregion
 
 
-        #region 初始化
+        #region Init
 
         /// <summary>  
         /// 初始化函数  
@@ -136,18 +141,20 @@ namespace IOCPLib
             // preallocate pool of SocketAsyncEventArgs objects  
             SocketAsyncEventArgs readWriteEventArg;
 
-            for (int i = 0; i < _maxClient; i++)
+            for (int i = 0; i < _numConnections; i++)
             {
                 //Pre-allocate a set of reusable SocketAsyncEventArgs  
                 readWriteEventArg = new SocketAsyncEventArgs();
                 readWriteEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(OnIOCompleted);
-                readWriteEventArg.UserToken = null;
+
+                //readWriteEventArg.UserToken = new AsyncUserToken();  //frFRee: 不同
+                readWriteEventArg.UserToken =null;
 
                 // assign a byte buffer from the buffer pool to the SocketAsyncEventArg object  
                 _bufferManager.SetBuffer(readWriteEventArg);
 
                 // add SocketAsyncEventArg to the pool  
-                _objectPool.Push(readWriteEventArg);
+                _readWritePool.Push(readWriteEventArg);
             }
 
         }
@@ -166,22 +173,22 @@ namespace IOCPLib
                 IsRunning = true;
                 IPEndPoint localEndPoint = new IPEndPoint(Address, Port);
                 // 创建监听socket  
-                _serverSock = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                //_serverSock.ReceiveBufferSize = _bufferSize;  
-                //_serverSock.SendBufferSize = _bufferSize;  
+                _listenSocket = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
                 if (localEndPoint.AddressFamily == AddressFamily.InterNetworkV6)
                 {
                     // 配置监听socket为 dual-mode (IPv4 & IPv6)   
                     // 27 is equivalent to IPV6_V6ONLY socket option in the winsock snippet below,  
-                    _serverSock.SetSocketOption(SocketOptionLevel.IPv6, (SocketOptionName)27, false);
-                    _serverSock.Bind(new IPEndPoint(IPAddress.IPv6Any, localEndPoint.Port));
+                    _listenSocket.SetSocketOption(SocketOptionLevel.IPv6, (SocketOptionName)27, false);
+                    _listenSocket.Bind(new IPEndPoint(IPAddress.IPv6Any, localEndPoint.Port));
                 }
                 else
                 {
-                    _serverSock.Bind(localEndPoint);
+                    _listenSocket.Bind(localEndPoint);
                 }
                 // 开始监听  
-                _serverSock.Listen(this._maxClient);
+                //_listenSocket.Listen(100); //frFRee: 不同
+                _listenSocket.Listen(this._numConnections); 
                 // 在监听Socket上投递一个接受请求。  
                 StartAccept(null);
             }
@@ -198,36 +205,37 @@ namespace IOCPLib
             if (IsRunning)
             {
                 IsRunning = false;
-                _serverSock.Close();
-                //TODO 关闭对所有客户端的连接  
+                _listenSocket.Close();
+                //frTODO：关闭对所有客户端的连接  
 
             }
         }
 
         #endregion
 
-
         #region Accept
 
         /// <summary>  
         /// 从客户端开始接受一个连接操作  
         /// </summary>  
-        private void StartAccept(SocketAsyncEventArgs asyniar)
+        private void StartAccept(SocketAsyncEventArgs acceptEventArg)
         {
-            if (asyniar == null)
+            if (acceptEventArg == null)
             {
-                asyniar = new SocketAsyncEventArgs();
-                asyniar.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
+                acceptEventArg = new SocketAsyncEventArgs();
+                acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
             }
             else
             {
                 //socket must be cleared since the context object is being reused  
-                asyniar.AcceptSocket = null;
+                acceptEventArg.AcceptSocket = null;
             }
-            _maxAcceptedClients.WaitOne();
-            if (!_serverSock.AcceptAsync(asyniar))
+            _maxNumberAcceptedClients.WaitOne();
+            bool willRaiseEvent = _listenSocket.AcceptAsync(acceptEventArg);
+            if (!willRaiseEvent)
             {
-                ProcessAccept(asyniar);
+                ProcessAccept(acceptEventArg);
+                //frTODO:
                 //如果I/O挂起等待异步则触发AcceptAsyn_Asyn_Completed事件  
                 //此时I/O操作同步完成，不会触发Asyn_Completed事件，所以指定BeginAccept()方法  
             }
@@ -256,16 +264,17 @@ namespace IOCPLib
                 {
                     try
                     {
+                        Interlocked.Increment(ref _numConnectedSockets);//原子操作加1  
+                        SocketAsyncEventArgs readEventArgs = _readWritePool.Pop();
+                        readEventArgs.UserToken = s; //frTODO: //这里这个token
 
-                        Interlocked.Increment(ref _clientCount);//原子操作加1  
-                        SocketAsyncEventArgs asyniar = _objectPool.Pop();
-                        asyniar.UserToken = s;
+                        Log4Debug(String.Format("客户 {0} 连入, 共有 {1} 个连接。", s.RemoteEndPoint.ToString(), _numConnectedSockets));
 
-                        Log4Debug(String.Format("客户 {0} 连入, 共有 {1} 个连接。", s.RemoteEndPoint.ToString(), _clientCount));
-
-                        if (!s.ReceiveAsync(asyniar))//投递接收请求  
+                        // As soon as the client is connected, post a receive to the connection
+                        bool willRaiseEvent = e.AcceptSocket.ReceiveAsync(readEventArgs);  
+                        if (!willRaiseEvent)
                         {
-                            ProcessReceive(asyniar);
+                            ProcessReceive(readEventArgs);//投递接收请求
                         }
                     }
                     catch (SocketException ex)
@@ -280,6 +289,106 @@ namespace IOCPLib
         }
 
         #endregion
+
+        #region 回调函数
+
+        /// <summary>  
+        /// 当Socket上的发送或接收请求被完成时，调用此函数  
+        /// </summary>  
+        /// <param name="sender">激发事件的对象</param>  
+        /// <param name="e">与发送或接收完成操作相关联的SocketAsyncEventArg对象</param>  
+        private void OnIOCompleted(object sender, SocketAsyncEventArgs e)
+        {
+            // Determine which type of operation just completed and call the associated handler.  
+            switch (e.LastOperation)
+            {
+                case SocketAsyncOperation.Accept:
+                    ProcessAccept(e);
+                    break;
+                case SocketAsyncOperation.Receive:
+                    ProcessReceive(e);
+                    break;
+                default:
+                    throw new ArgumentException("The last operation completed on the socket was not a receive or send");
+            }
+        }
+
+        #endregion
+
+        #region 接收数据
+
+
+        /// <summary>  
+        ///接收完成时处理函数  
+        /// </summary>  
+        /// <param name="e">与接收完成操作相关联的SocketAsyncEventArg对象</param>  
+        private void ProcessReceive(SocketAsyncEventArgs e)
+        {
+            if (e.SocketError == SocketError.Success)//if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)  
+            {
+                // 检查远程主机是否关闭连接  
+                if (e.BytesTransferred > 0)
+                {
+                    Socket s = (Socket)e.UserToken;
+                    //判断所有需接收的数据是否已经完成  
+                    if (s.Available == 0)
+                    {
+                        //从侦听者获取接收到的消息。   
+                        //String received = Encoding.ASCII.GetString(e.Buffer, e.Offset, e.BytesTransferred);  
+                        //echo the data received back to the client  
+                        //e.SetBuffer(e.Offset, e.BytesTransferred);  
+
+                        byte[] data = new byte[e.BytesTransferred];
+                        Array.Copy(e.Buffer, e.Offset, data, 0, data.Length);//从e.Buffer块中复制数据出来，保证它可重用  
+
+                        //string info = Encoding.Default.GetString(data);
+                        //Log4Debug(String.Format("收到 {0} 数据为 {1}", s.RemoteEndPoint.ToString(), info));
+
+                        //frTODO 处理数据  
+                        Console.WriteLine("Recv {0} bytes.", data.Length);
+                        MemoryStream transferred = new MemoryStream(data, 0, data.Length, true, true);
+                        OnRecv(transferred);
+                    }
+
+                    if (!s.ReceiveAsync(e))//为接收下一段数据，投递接收请求，这个函数有可能同步完成，这时返回false，并且不会引发SocketAsyncEventArgs.Completed事件  
+                    {
+                        //同步接收时处理接收完成事件  
+                        ProcessReceive(e);
+                    }
+                }
+            }
+            else
+            {
+                CloseClientSocket(e);
+            }
+        }
+
+        private void OnRecv(MemoryStream stream)
+        {
+            int offset = 0;
+            byte[] buffer = stream.GetBuffer();
+            while ((stream.Length - offset) > sizeof(UInt16))
+            {
+                UInt16 size = BitConverter.ToUInt16(buffer, offset);
+                if (size + sizeof(UInt16) + sizeof(Int32) > stream.Length - offset)
+                {
+                    break;
+                }
+
+                UInt32 msg_id = BitConverter.ToUInt32(buffer, offset + sizeof(UInt16));
+                MemoryStream msg = new MemoryStream(buffer, offset + sizeof(UInt16) + sizeof(Int32), size, true, true);
+                lock (m_msgQueue)
+                {
+                    m_msgQueue.Enqueue(new KeyValuePair<uint, MemoryStream>(msg_id, msg));
+                }
+                offset += (size + sizeof(UInt16) + sizeof(Int32));
+            }
+            stream.Seek(offset, SeekOrigin.Begin);
+        }
+
+
+        #endregion
+
 
         IList<ArraySegment<byte>> _sendStreams = new List<ArraySegment<byte>>();
         IList<ArraySegment<byte>> _waitStreams = new List<ArraySegment<byte>>();
@@ -464,82 +573,9 @@ namespace IOCPLib
 
         #endregion
 
-        #region 接收数据
-
-
-        /// <summary>  
-        ///接收完成时处理函数  
-        /// </summary>  
-        /// <param name="e">与接收完成操作相关联的SocketAsyncEventArg对象</param>  
-        private void ProcessReceive(SocketAsyncEventArgs e)
-        {
-            if (e.SocketError == SocketError.Success)//if (e.BytesTransferred > 0 && e.SocketError == SocketError.Success)  
-            {
-                // 检查远程主机是否关闭连接  
-                if (e.BytesTransferred > 0)
-                {
-                    Socket s = (Socket)e.UserToken;
-                    //判断所有需接收的数据是否已经完成  
-                    if (s.Available == 0)
-                    {
-                        //从侦听者获取接收到的消息。   
-                        //String received = Encoding.ASCII.GetString(e.Buffer, e.Offset, e.BytesTransferred);  
-                        //echo the data received back to the client  
-                        //e.SetBuffer(e.Offset, e.BytesTransferred);  
-
-                        byte[] data = new byte[e.BytesTransferred];
-                        Array.Copy(e.Buffer, e.Offset, data, 0, data.Length);//从e.Buffer块中复制数据出来，保证它可重用  
-
-                        //string info = Encoding.Default.GetString(data);
-                        //Log4Debug(String.Format("收到 {0} 数据为 {1}", s.RemoteEndPoint.ToString(), info));
-                        //TODO 处理数据  
-
-                        Console.WriteLine("Recv {0} bytes.", data.Length);
-                        MemoryStream transferred = new MemoryStream(data, 0, data.Length, true, true);
-                        OnRecv(transferred);
-
-                        //增加服务器接收的总字节数。  
-                    }
-
-                    if (!s.ReceiveAsync(e))//为接收下一段数据，投递接收请求，这个函数有可能同步完成，这时返回false，并且不会引发SocketAsyncEventArgs.Completed事件  
-                    {
-                        //同步接收时处理接收完成事件  
-                        ProcessReceive(e);
-                    }
-                }
-            }
-            else
-            {
-                CloseClientSocket(e);
-            }
-        }
-
-        #endregion
         protected Queue<KeyValuePair<UInt32, MemoryStream>> m_msgQueue = new Queue<KeyValuePair<uint, MemoryStream>>();
         protected Queue<KeyValuePair<UInt32, MemoryStream>> m_deal_msgQueue = new Queue<KeyValuePair<uint, MemoryStream>>();
 
-        private void OnRecv(MemoryStream stream)
-        {
-            int offset = 0;
-            byte[] buffer = stream.GetBuffer();
-            while ((stream.Length - offset) > sizeof(UInt16))
-            {
-                UInt16 size = BitConverter.ToUInt16(buffer, offset);
-                if (size + sizeof(UInt16) + sizeof(Int32) > stream.Length - offset)
-                {
-                    break;
-                }
-
-                UInt32 msg_id = BitConverter.ToUInt32(buffer, offset + sizeof(UInt16));
-                MemoryStream msg = new MemoryStream(buffer, offset + sizeof(UInt16) + sizeof(Int32), size, true, true);
-                lock (m_msgQueue)
-                {
-                    m_msgQueue.Enqueue(new KeyValuePair<uint, MemoryStream>(msg_id, msg));
-                }
-                offset += (size + sizeof(UInt16) + sizeof(Int32));
-            }
-            stream.Seek(offset, SeekOrigin.Begin);
-        }
 
         public void OnProcessProtocal()
         {
@@ -572,30 +608,7 @@ namespace IOCPLib
         protected abstract void Response(uint id, MemoryStream stream);
 
 
-        #region 回调函数
 
-        /// <summary>  
-        /// 当Socket上的发送或接收请求被完成时，调用此函数  
-        /// </summary>  
-        /// <param name="sender">激发事件的对象</param>  
-        /// <param name="e">与发送或接收完成操作相关联的SocketAsyncEventArg对象</param>  
-        private void OnIOCompleted(object sender, SocketAsyncEventArgs e)
-        {
-            // Determine which type of operation just completed and call the associated handler.  
-            switch (e.LastOperation)
-            {
-                case SocketAsyncOperation.Accept:
-                    ProcessAccept(e);
-                    break;
-                case SocketAsyncOperation.Receive:
-                    ProcessReceive(e);
-                    break;
-                default:
-                    throw new ArgumentException("The last operation completed on the socket was not a receive or send");
-            }
-        }
-
-        #endregion
 
         #region Close
         /// <summary>  
@@ -628,9 +641,9 @@ namespace IOCPLib
             {
                 s.Close();
             }
-            Interlocked.Decrement(ref _clientCount);
+            Interlocked.Decrement(ref _numConnectedSockets);
             _maxAcceptedClients.Release();
-            _objectPool.Push(e);//SocketAsyncEventArg 对象被释放，压入可重用队列。  
+            _readWritePool.Push(e);//SocketAsyncEventArg 对象被释放，压入可重用队列。  
         }
         #endregion
 
