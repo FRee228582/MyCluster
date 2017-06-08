@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net">
+      <HintPath>..\..\ThirdLib\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -40,10 +43,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AbstractIOCPTcpServer.cs" />
+    <Compile Include="AsyncSocketCore\AsyncSendBufferManager.cs" />
+    <Compile Include="AsyncSocketCore\AsyncSocketInvokeElement.cs" />
+    <Compile Include="AsyncSocketCore\AsyncSocketServer.cs" />
+    <Compile Include="AsyncSocketCore\AsyncSocketUserToken.cs" />
+    <Compile Include="AsyncSocketCore\AsyncSocketUserTokenPool.cs" />
+    <Compile Include="AsyncSocketCore\BaseSocketProtocol.cs" />
+    <Compile Include="AsyncSocketCore\DynamicBufferManager.cs" />
+    <Compile Include="AsyncSocketCore\IncomingDataParser.cs" />
+    <Compile Include="AsyncSocketCore\OutgoingDataAssembler.cs" />
+    <Compile Include="AsyncSocketCore\Program.cs" />
+    <Compile Include="AsyncSocketCore\ProtocolKey.cs" />
     <Compile Include="BufferManager.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="IOCPClient.cs" />
+    <Compile Include="IOCP\AsyncUserToken.cs" />
+    <Compile Include="IOCP\IOCPServer.cs" />
     <Compile Include="IOCPServer.cs">
       <SubType>Code</SubType>
     </Compile>

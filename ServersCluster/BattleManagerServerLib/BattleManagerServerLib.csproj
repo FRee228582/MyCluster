@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net">
+      <HintPath>..\..\ThirdLib\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="protobuf-net">
       <HintPath>..\..\Protocol\Protobuf-net\ProtoGen\protobuf-net.dll</HintPath>
     </Reference>
@@ -44,8 +47,10 @@
   <ItemGroup>
     <Compile Include="Api\Api.cs" />
     <Compile Include="Api\Api_Init.cs" />
+    <Compile Include="BattleServer\BattleServerListen.cs" />
     <Compile Include="BattleServer\BattleServer.cs" />
     <Compile Include="BattleServer\BattleServerManager.cs" />
+    <Compile Include="BattleServer\BattleServerResponse.cs" />
     <Compile Include="ClusterManagerServer\CMServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

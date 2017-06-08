@@ -17,6 +17,7 @@ namespace BattleManagerServerLib
             {
 
             }
+            InitLogger();
             InitProtocol();
 
             //InitClusterManagerServer();

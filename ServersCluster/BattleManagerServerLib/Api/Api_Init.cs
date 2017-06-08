@@ -25,10 +25,12 @@ namespace BattleManagerServerLib
             m_CMServer.Connect();
         }
 
-        BattleServer m_BattleServer;
+        BattleServerListen m_BattleServer;
+        //BattleServer m_BattleServer;
         void InitBattleServer()
         {
-            m_BattleServer = new BattleServer(this, 9999);
+            m_BattleServer = new BattleServerListen(this, 9999);
+            //m_BattleServer = new BattleServer(this, 9999);
             m_BattleServer.Start();
         }
 
