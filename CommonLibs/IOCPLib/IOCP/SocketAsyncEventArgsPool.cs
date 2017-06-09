@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 
-namespace IOCPLib
+namespace IOCPLib.IOCP
 {
     // Represents a collection of reusable SocketAsyncEventArgs objects.  
     class SocketAsyncEventArgsPool

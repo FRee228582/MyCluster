@@ -1,15 +1,15 @@
 ﻿using Engine.Foundation;
+using IOCPLib.IOCP;
 using Message.Server.Battle.Protocol.B2BM;
 using Message.Server.BattleManager.Protocol.BM2B;
 using ServerFrameWork;
-using SocketAsyncSvr;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
 namespace BattleManagerServerLib
 {
-    public class BattleServerResponse : AsyncSocketInvokeElement
+    public class BattleServerResponse : InvokeElement
     {
         Api _api;
         ServerTag _clientTag = new ServerTag();
@@ -19,7 +19,7 @@ namespace BattleManagerServerLib
             set { _clientTag = value; }
         }
 
-        public BattleServerResponse(AsyncSocketServer asyncSocketServer, AsyncSocketUserToken asyncSocketUserToken, Api api)
+        public BattleServerResponse(AsyncSocketServer asyncSocketServer, AsyncUserToken asyncSocketUserToken, Api api)
             : base(asyncSocketServer, asyncSocketUserToken)
         {
             _api = api;
@@ -39,7 +39,7 @@ namespace BattleManagerServerLib
             }
             else
             {
-                Program.Logger.ErrorFormat("got unsupported packet {0} from {1} {2}-{3}-{4}",
+                Console.WriteLine("got unsupported packet {0} from {1} {2}-{3}-{4}",
                     id, ClientTag.ServerName, ClientTag.AreaId, ClientTag.ServerId, ClientTag.SubId);
             }
         }
@@ -55,7 +55,6 @@ namespace BattleManagerServerLib
             head.Write(BitConverter.GetBytes(Id<T>.Value), 0, 4);
             return Send(head, body);
         }
-
 
         public void AddResponser(uint id, Responseer responser)
         {

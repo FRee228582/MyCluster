@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 
-namespace IOCPLib
+namespace IOCPLib.IOCP
 {
     // This class creates a single large buffer which can be divided up 
     // and assigned to SocketAsyncEventArgs objects for use with each 
@@ -13,7 +13,7 @@ namespace IOCPLib
     // fragmenting heap memory.
     // 
     // The operations exposed on the BufferManager class are not thread safe.
-    class BufferManager
+    public class BufferManager
     {
         int m_numBytes;                 // the total number of bytes controlled by the buffer pool
         byte[] m_buffer;                // the underlying byte array maintained by the Buffer Manager

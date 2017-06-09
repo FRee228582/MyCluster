@@ -1,17 +1,16 @@
 ﻿using Engine.Foundation;
-using IOCPLib;
 using Message.Server.Battle.Protocol.B2BM;
 using Message.Server.BattleManager.Protocol.BM2B;
 using ServerFrameWork;
-using SocketAsyncSvr;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using TcpLib;
 
 namespace BattleManagerServerLib
 {
 
-    public class BattleServer : IOCPServer
+    public class BattleServer : AbstractTcpServer
     {
         ServerTag _clientTag = new ServerTag();
         Api _api = null;
@@ -22,7 +21,7 @@ namespace BattleManagerServerLib
         }
 
         public BattleServer(Api server, ushort port)
-            : base(port,1024)
+            : base(port)
         {
             _api = server;
             _clientTag.ServerName = "Battle";
@@ -51,17 +50,17 @@ namespace BattleManagerServerLib
             }
         }
 
-        public bool Send<T>(T msg) where T : global::ProtoBuf.IExtensible
-        {
-            MemoryStream body = new MemoryStream();
-            ProtoBuf.Serializer.Serialize(body, msg);
+        //public bool Send<T>(T msg) where T : global::ProtoBuf.IExtensible
+        //{
+        //    MemoryStream body = new MemoryStream();
+        //    ProtoBuf.Serializer.Serialize(body, msg);
 
-            MemoryStream head = new MemoryStream(sizeof(ushort) + sizeof(uint));
-            ushort len = (ushort)body.Length;
-            head.Write(BitConverter.GetBytes(len), 0, 2);
-            head.Write(BitConverter.GetBytes(Id<T>.Value), 0, 4);
-            return Send(head, body);
-        }
+        //    MemoryStream head = new MemoryStream(sizeof(ushort) + sizeof(uint));
+        //    ushort len = (ushort)body.Length;
+        //    head.Write(BitConverter.GetBytes(len), 0, 2);
+        //    head.Write(BitConverter.GetBytes(Id<T>.Value), 0, 4);
+        //    return Send(head, body);
+        //}
 
   
         public void AddResponser(uint id, Responseer responser)
@@ -87,6 +86,16 @@ namespace BattleManagerServerLib
             ret.serverId = msg.serverId;
             ret.subId = msg.subId;
             Send(ret);
+        }
+
+        protected override void AccpetComplete()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void DisconnectComplete()
+        {
+            throw new NotImplementedException();
         }
     }
 }

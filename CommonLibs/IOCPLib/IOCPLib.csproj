@@ -42,27 +42,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AbstractIOCPTcpServer.cs" />
-    <Compile Include="AsyncSocketCore\AsyncSendBufferManager.cs" />
-    <Compile Include="AsyncSocketCore\AsyncSocketInvokeElement.cs" />
-    <Compile Include="AsyncSocketCore\AsyncSocketServer.cs" />
-    <Compile Include="AsyncSocketCore\AsyncSocketUserToken.cs" />
-    <Compile Include="AsyncSocketCore\AsyncSocketUserTokenPool.cs" />
-    <Compile Include="AsyncSocketCore\DynamicBufferManager.cs" />
-    <Compile Include="AsyncSocketCore\Program.cs" />
-    <Compile Include="AsyncSocketCore\ProtocolKey.cs" />
-    <Compile Include="BufferManager.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="IOCPClient.cs" />
+    <Compile Include="IOCP\AsyncSendBufferManager.cs" />
+    <Compile Include="IOCP\AsyncUserTokenPool.cs" />
     <Compile Include="IOCP\AsyncUserToken.cs" />
-    <Compile Include="IOCP\IOCPServer.cs" />
-    <Compile Include="IOCPServer.cs">
+    <Compile Include="IOCP\BufferManager.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="IOCPTcp.cs" />
+    <Compile Include="IOCP\DynamicBufferManager.cs" />
+    <Compile Include="IOCP\InvokeElement.cs" />
+    <Compile Include="IOCP\AsyncSocketServer.cs" />
+    <Compile Include="IOCP\Packet.cs" />
+    <Compile Include="IOCP\PacketHead.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SocketAsyncEventArgsPool.cs">
+    <Compile Include="IOCP\SocketAsyncEventArgsPool.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

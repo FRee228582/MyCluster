@@ -117,7 +117,7 @@ namespace TcpLib
 
         protected abstract void Response(uint id, MemoryStream stream);
 
-        public bool Send<T>(T msg) where T : global::ProtoBuf.IExtensible
+        public virtual bool Send<T>(T msg) where T : global::ProtoBuf.IExtensible
         {
             MemoryStream body = new MemoryStream();
             ProtoBuf.Serializer.Serialize(body, msg);
@@ -129,7 +129,7 @@ namespace TcpLib
             return Send(head, body);
         }
 
-        private bool Send(MemoryStream head, MemoryStream body)
+        public bool Send(MemoryStream head, MemoryStream body)
         {
             if (_tcp == null)
             {
