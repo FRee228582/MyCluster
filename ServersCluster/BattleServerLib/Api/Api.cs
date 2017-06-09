@@ -29,12 +29,37 @@ namespace BattleServerLib
 
         public override void Update()
         {
+            //lock(lstLock)
+            //{
+            //    foreach (var item in lstBMServers)
+            //    {
+            //        item.Update();
+            //    }
+            //}
+
             m_BMServer.Update();
             //m_CMServer.Update();
         }
 
         public override void ExcuteCommand(string cmd)
         {
+            string[] cmdArr = cmd.Split(' ');
+            if (cmdArr.Length == 0)
+            {
+                return;
+            }
+            string help = "";
+            switch(cmdArr[0])
+            {
+                case "start":
+                    m_BMServer.SetTestStart();
+                    break;
+                case "stop":
+                    m_BMServer.SetTestStop();
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }

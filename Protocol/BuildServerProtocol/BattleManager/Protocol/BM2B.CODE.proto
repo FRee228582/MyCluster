@@ -11,3 +11,9 @@ message MSG_BM2B_RETRUN_REGISTER {
 	required string msg = 4;
 }
 
+message MSG_BM2B_TEST {
+	required int32 areaId =  1;
+	required int32 serverId =  2;
+	required int32 subId =  3;
+}
+

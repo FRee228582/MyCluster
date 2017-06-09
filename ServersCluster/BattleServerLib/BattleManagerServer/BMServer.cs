@@ -6,6 +6,7 @@ using System.IO;
 using TcpLib;
 using Message.Server.BattleManager.Protocol.BM2B;
 using Engine.Foundation;
+using System.Threading;
 
 namespace BattleServerLib
 {
@@ -13,6 +14,8 @@ namespace BattleServerLib
     {
         ServerTag _serverTag = new ServerTag();
         Api _api = null;
+        bool bSwitch = false;
+
         public ServerTag ServerTag
         {
             get { return _serverTag; }
@@ -38,19 +41,20 @@ namespace BattleServerLib
             }
             else
             {
-                Console.WriteLine("connect failed, connect to {0} ip {4} port {5} again"
-                    , ServerTag.ServerName, ServerTag.AreaId, ServerTag.ServerId, ServerTag.SubId,Ip,Port);
+                //Console.WriteLine("connect failed, connect to {0} ip {4} port {5} again"
+                //    , ServerTag.ServerName, ServerTag.AreaId, ServerTag.ServerId, ServerTag.SubId, Ip, Port);
             }
         }
 
         protected override void DisconnectComplete()
         {
-            Console.WriteLine("switch off from {0}" 
+            Console.WriteLine("switch off from {0}"
                 , ServerTag.ServerName);
         }
 
         public void Update()
         {
+            RequsetTest();
             OnProcessProtocal();
         }
 
@@ -102,7 +106,27 @@ namespace BattleServerLib
             Console.WriteLine(msg.msg);
         }
 
+        public void RequsetTest()
+        {
+            if (bSwitch)
+            {
+                MSG_B2BM_TEST requset = new MSG_B2BM_TEST();
+                requset.areaId = _api.ApiTag.AreaId;
+                requset.serverId = _api.ApiTag.ServerId;
+                requset.subId = _api.ApiTag.SubId;
+                Send(requset);
+                Thread.Sleep(10);
+            }
+        }
 
+        public void SetTestStart()
+        {
+            bSwitch = true;
+        }
 
+        public void SetTestStop()
+        {
+            bSwitch = false;
+        }
     }
 }

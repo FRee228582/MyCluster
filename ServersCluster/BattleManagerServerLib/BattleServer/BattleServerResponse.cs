@@ -6,6 +6,7 @@ using ServerFrameWork;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 namespace BattleManagerServerLib
 {
@@ -64,6 +65,15 @@ namespace BattleManagerServerLib
         public void BindResponser()
         {
             AddResponser(Id<MSG_B2BM_REGISTER>.Value, OnResponse_Regist);
+            AddResponser(Id<MSG_B2BM_TEST>.Value, OnResponse_Test);
+        }
+
+        private void OnResponse_Test(MemoryStream stream)
+        {
+            MSG_B2BM_TEST msg = ProtoBuf.Serializer.Deserialize<MSG_B2BM_TEST>(stream);
+
+            Interlocked.Increment(ref AsyncSocketServer.g_totalStreamCount);
+            Interlocked.Add(ref AsyncSocketServer.g_totalBytesRead, (int)stream.Length);
         }
 
         private void OnResponse_Regist(MemoryStream stream)

@@ -74,6 +74,14 @@ namespace IOCPLib.IOCP
             }
         }
 
+        public int GetLength()
+        {
+            lock (m_list)
+            {
+                return m_list.Count;
+            }
+        }
+
         public void Update()
         {
             lock (m_list)

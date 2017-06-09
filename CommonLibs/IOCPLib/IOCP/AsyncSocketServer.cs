@@ -29,6 +29,26 @@ namespace IOCPLib.IOCP
 
         #region Fields
 
+        public static int g_totalBytesRead=0;
+        public static int g_totalStreamCount=0;
+        public static DateTime start;
+        public static DateTime stop;
+
+        public void GetQPS()
+        {
+            stop = DateTime.Now;
+
+            double t = (stop - start).TotalMilliseconds;
+            double averageQPS = (g_totalStreamCount / t) * 1000.00;
+            double averageBytePerSec = (g_totalStreamCount / t) * 1000.00;
+            Console.WriteLine("QPS  streamCount={0} bytes ={1} ({2} ms average {3} client)", g_totalStreamCount, g_totalBytesRead,t, AsyncUserTokenList.GetLength());
+            start = stop;
+            g_totalBytesRead = 0;
+            g_totalStreamCount = 0;
+           
+        }
+
+
         /// <summary>  
         /// 监听Socket，用于接受客户端的连接请求  
         /// </summary>  

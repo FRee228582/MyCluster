@@ -15,10 +15,13 @@ namespace BattleManagerServerLib
     {
         Api _api = null;
 
+
         public BattleServerListen(Api server, ushort port)
             : base(port,1024)
         {
             _api = server;
+            TickTock tick = new TickTock(this);
+            tick.Start();
         }
         protected override void BuildingSocketInvokeElement(AsyncUserToken userToken)
         {

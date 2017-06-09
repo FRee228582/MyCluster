@@ -51,6 +51,7 @@
     <Compile Include="BattleServer\BattleServer.cs" />
     <Compile Include="BattleServer\BattleServerManager.cs" />
     <Compile Include="BattleServer\BattleServerResponse.cs" />
+    <Compile Include="BattleServer\TickTock.cs" />
     <Compile Include="ClusterManagerServer\CMServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

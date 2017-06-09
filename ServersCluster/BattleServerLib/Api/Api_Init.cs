@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace BattleServerLib
 {
@@ -13,11 +14,23 @@ namespace BattleServerLib
             Message.Server.ClusterManager.Protocol.CM2B.Api.GenerateId();
         }
 
+        //private Object lstLock;
+        //List<BMServer> lstBMServers = new List<BMServer>();
+
         BMServer m_BMServer;
+
         void InitBattleManagerServer()
         {
-            m_BMServer = new BMServer(this,"127.0.0.1", 9999);
-            m_BMServer.Connect();
+            //lstLock = new Object();
+            //lock (lstLock)
+            //{
+            //    for (int i = 0; i < 5000; i++)
+            //    {
+                    m_BMServer = new BMServer(this, "127.0.0.1", 9999);
+                    m_BMServer.Connect();
+                    //lstBMServers.Add(m_BMServer);
+            //    }
+            //}
         }
 
         CMServer m_CMServer;

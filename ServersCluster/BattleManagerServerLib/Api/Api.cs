@@ -5,6 +5,7 @@ namespace BattleManagerServerLib
 {
     public partial class Api:AbstractServer
     {
+
         public override void Init(string[] args)
         {
             if (args.Length == 3)
