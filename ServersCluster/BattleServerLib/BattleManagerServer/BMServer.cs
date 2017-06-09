@@ -99,7 +99,7 @@ namespace BattleServerLib
             _serverTag.AreaId = (ushort)msg.areaId;
             _serverTag.ServerId = (ushort)msg.serverId;
             _serverTag.SubId = (ushort)msg.subId;
-            Console.WriteLine("registed success to {0}-{1}-{2}-{3} ", ServerTag.ServerName, ServerTag.AreaId, ServerTag.ServerId, ServerTag.SubId);
+            Console.WriteLine(msg.msg);
         }
 
 

@@ -11,6 +11,7 @@ namespace BattleManagerServerLib
 {
     public class BattleServerResponse : AsyncSocketInvokeElement
     {
+        Api _api;
         ServerTag _clientTag = new ServerTag();
         public ServerTag ClientTag
         {
@@ -18,9 +19,10 @@ namespace BattleManagerServerLib
             set { _clientTag = value; }
         }
 
-        public BattleServerResponse(AsyncSocketServer asyncSocketServer, AsyncSocketUserToken asyncSocketUserToken)
+        public BattleServerResponse(AsyncSocketServer asyncSocketServer, AsyncSocketUserToken asyncSocketUserToken, Api api)
             : base(asyncSocketServer, asyncSocketUserToken)
         {
+            _api = api;
             _clientTag.ServerName = "Battle";
             BindResponser();
         }
@@ -74,9 +76,11 @@ namespace BattleManagerServerLib
             Console.WriteLine("{0}-{1}-{2}-{3} regist succese", ClientTag.ServerName, ClientTag.AreaId, ClientTag.ServerId, ClientTag.SubId);
 
             MSG_BM2B_RETRUN_REGISTER ret = new MSG_BM2B_RETRUN_REGISTER();
-            ret.areaId = msg.areaId;
-            ret.serverId = msg.serverId;
-            ret.subId = msg.subId;
+            ret.areaId = _api.ApiTag.AreaId;
+            ret.serverId = _api.ApiTag.ServerId;
+            ret.subId = _api.ApiTag.SubId;
+            ret.msg = string.Format("regist to {0}-{1}-{2}-{3} success ({4}-{5}-{6}-{7})"
+               , _api.ApiTag.ServerName, _api.ApiTag.AreaId, _api.ApiTag.ServerId, _api.ApiTag.SubId, ClientTag.ServerName, ClientTag.AreaId, ClientTag.ServerId, ClientTag.SubId);
             Send(ret);
         }
     }

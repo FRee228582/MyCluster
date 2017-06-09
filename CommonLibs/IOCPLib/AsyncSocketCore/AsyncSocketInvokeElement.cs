@@ -18,8 +18,8 @@ namespace SocketAsyncSvr
         private bool m_netByteOrder;
         public bool NetByteOrder { get { return m_netByteOrder; } set { m_netByteOrder = value; } } //长度是否使用网络字节顺序
 
-        protected IncomingDataParser m_incomingDataParser; //协议解析器，用来解析客户端接收到的命令
-        protected OutgoingDataAssembler m_outgoingDataAssembler; //协议组装器，用来组织服务端返回的命令
+        //protected IncomingDataParser m_incomingDataParser; //协议解析器，用来解析客户端接收到的命令
+        //protected OutgoingDataAssembler m_outgoingDataAssembler; //协议组装器，用来组织服务端返回的命令
 
         protected bool m_sendAsync; //标识是否有发送异步事件
 
@@ -35,8 +35,8 @@ namespace SocketAsyncSvr
 
             m_netByteOrder = false;
 
-            m_incomingDataParser = new IncomingDataParser();
-            m_outgoingDataAssembler = new OutgoingDataAssembler();
+            //m_incomingDataParser = new IncomingDataParser();
+            //m_outgoingDataAssembler = new OutgoingDataAssembler();
 
             m_sendAsync = false;
 
@@ -179,7 +179,6 @@ namespace SocketAsyncSvr
 
         #endregion
 
-
         #region 发送队列
         IList<ArraySegment<byte>> _sendStreams = new List<ArraySegment<byte>>();
         IList<ArraySegment<byte>> _waitStreams = new List<ArraySegment<byte>>();
@@ -277,6 +276,7 @@ namespace SocketAsyncSvr
 
         #endregion
 
+
         public virtual bool SendCompleted()
         {
             m_activeDT = DateTime.UtcNow;
@@ -303,14 +303,14 @@ namespace SocketAsyncSvr
 
         public bool DoSendResult()
         {
-            string commandText = m_outgoingDataAssembler.GetProtocolText();
-            byte[] bufferUTF8 = Encoding.UTF8.GetBytes(commandText);
-            int totalLength = sizeof(int) + bufferUTF8.Length; //获取总大小
+            //string commandText = m_outgoingDataAssembler.GetProtocolText();
+            //byte[] bufferUTF8 = Encoding.UTF8.GetBytes(commandText);
+            //int totalLength = sizeof(int) + bufferUTF8.Length; //获取总大小
             AsyncSendBufferManager asyncSendBufferManager = m_asyncSocketUserToken.SendBuffer;
             asyncSendBufferManager.StartPacket();
-            asyncSendBufferManager.DynamicBufferManager.WriteInt(totalLength, false); //写入总大小
-            asyncSendBufferManager.DynamicBufferManager.WriteInt(bufferUTF8.Length, false); //写入命令大小
-            asyncSendBufferManager.DynamicBufferManager.WriteBuffer(bufferUTF8); //写入命令内容
+            //asyncSendBufferManager.DynamicBufferManager.WriteInt(totalLength, false); //写入总大小
+            //asyncSendBufferManager.DynamicBufferManager.WriteInt(bufferUTF8.Length, false); //写入命令大小
+            //asyncSendBufferManager.DynamicBufferManager.WriteBuffer(bufferUTF8); //写入命令内容
             asyncSendBufferManager.EndPacket();
 
             bool result = true;
@@ -330,14 +330,14 @@ namespace SocketAsyncSvr
 
         public bool DoSendResult(byte[] buffer, int offset, int count)
         {
-            string commandText = m_outgoingDataAssembler.GetProtocolText();
-            byte[] bufferUTF8 = Encoding.UTF8.GetBytes(commandText);
-            int totalLength = sizeof(int) + bufferUTF8.Length + count; //获取总大小
+            //string commandText = m_outgoingDataAssembler.GetProtocolText();
+            //byte[] bufferUTF8 = Encoding.UTF8.GetBytes(commandText);
+            //int totalLength = sizeof(int) + bufferUTF8.Length + count; //获取总大小
             AsyncSendBufferManager asyncSendBufferManager = m_asyncSocketUserToken.SendBuffer;
             asyncSendBufferManager.StartPacket();
-            asyncSendBufferManager.DynamicBufferManager.WriteInt(totalLength, false); //写入总大小
-            asyncSendBufferManager.DynamicBufferManager.WriteInt(bufferUTF8.Length, false); //写入命令大小
-            asyncSendBufferManager.DynamicBufferManager.WriteBuffer(bufferUTF8); //写入命令内容
+            //asyncSendBufferManager.DynamicBufferManager.WriteInt(totalLength, false); //写入总大小
+            //asyncSendBufferManager.DynamicBufferManager.WriteInt(bufferUTF8.Length, false); //写入命令大小
+            //asyncSendBufferManager.DynamicBufferManager.WriteBuffer(bufferUTF8); //写入命令内容
             asyncSendBufferManager.DynamicBufferManager.WriteBuffer(buffer, offset, count); //写入二进制数据
             asyncSendBufferManager.EndPacket();
 

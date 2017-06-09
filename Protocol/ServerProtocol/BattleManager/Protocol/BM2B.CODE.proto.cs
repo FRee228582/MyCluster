@@ -60,6 +60,13 @@ namespace Message.Server.BattleManager.Protocol.BM2B
       get { return _subId; }
       set { _subId = value; }
     }
+    private string _msg;
+    [global::ProtoBuf.ProtoMember(4, IsRequired = true, Name=@"msg", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    public string msg
+    {
+      get { return _msg; }
+      set { _msg = value; }
+    }
     private global::ProtoBuf.IExtension extensionObject;
     global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
       { return global::ProtoBuf.Extensible.GetExtensionObject(ref extensionObject, createIfMissing); }

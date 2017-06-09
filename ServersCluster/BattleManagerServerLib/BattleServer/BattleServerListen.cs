@@ -37,7 +37,7 @@ namespace BattleManagerServerLib
             //else if (flag == (byte)SocketFlag.LogOutput)
             //    userToken.AsyncSocketInvokeElement = new LogOutputSocketProtocol(this, userToken);
 
-            userToken.AsyncSocketInvokeElement = new BattleServerResponse(this, userToken);
+            userToken.AsyncSocketInvokeElement = new BattleServerResponse(this, userToken,_api);
             if (userToken.AsyncSocketInvokeElement != null)
             {
                 Program.Logger.InfoFormat("Building socket invoke element {0}.Local Address: {1}, Remote Address: {2}",

@@ -16,4 +16,5 @@ message MSG_BM2B_RETRUN_REGISTER 0x02030002
 	required int32 areaId = 1;
 	required int32 serverId = 2;
 	required int32 subId =3;
+	required string msg =4;
 }
