@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace IOCPLib.IOCP
 {
@@ -29,13 +27,13 @@ namespace IOCPLib.IOCP
             m_sendBufferPacket.Count = 0;
         }
 
-        public void StartPacket()
+        public void StartPacket()  //StartPacket 和 EndPacket 成对调用
         {
             m_sendBufferPacket.Offset = m_dynamicBufferManager.DataCount;
             m_sendBufferPacket.Count = 0;
         }
 
-        public void EndPacket()
+        public void EndPacket() //StartPacket 和 EndPacket 成对调用
         {
             m_sendBufferPacket.Count = m_dynamicBufferManager.DataCount - m_sendBufferPacket.Offset;
             m_sendBufferList.Add(m_sendBufferPacket);

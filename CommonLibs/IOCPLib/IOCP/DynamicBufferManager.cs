@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace IOCPLib.IOCP
 {
@@ -95,10 +92,10 @@ namespace IOCPLib.IOCP
             WriteBuffer(tmpBuffer);
         }
 
-        public void WriteString(string value) //文本全部转成UTF8，UTF8兼容性好
-        {
-            byte[] tmpBuffer = Encoding.UTF8.GetBytes(value);
-            WriteBuffer(tmpBuffer);
-        }
+        //public void WriteString(string value) //文本全部转成UTF8，UTF8兼容性好
+        //{
+        //    byte[] tmpBuffer = Encoding.UTF8.GetBytes(value);
+        //    WriteBuffer(tmpBuffer);
+        //}
     }
 }

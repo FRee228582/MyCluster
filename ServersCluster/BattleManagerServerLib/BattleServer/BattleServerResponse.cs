@@ -88,7 +88,7 @@ namespace BattleManagerServerLib
             ret.areaId = _api.ApiTag.AreaId;
             ret.serverId = _api.ApiTag.ServerId;
             ret.subId = _api.ApiTag.SubId;
-            ret.msg = string.Format("regist to {0}-{1}-{2}-{3} success ({4}-{5}-{6}-{7})"
+            ret.msg = string.Format("11 regist to {0}-{1}-{2}-{3} success ({4}-{5}-{6}-{7})"
                , _api.ApiTag.ServerName, _api.ApiTag.AreaId, _api.ApiTag.ServerId, _api.ApiTag.SubId, ClientTag.ServerName, ClientTag.AreaId, ClientTag.ServerId, ClientTag.SubId);
             Send(ret);
         }

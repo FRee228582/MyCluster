@@ -156,7 +156,7 @@ namespace IOCPLib.IOCP
                 AsyncSendBufferManager asyncSendBufferManager = m_asyncUserToken.SendBuffer;
                 asyncSendBufferManager.StartPacket();
                 asyncSendBufferManager.DynamicBufferManager.WriteBuffer(head.GetBuffer(), 0, (int)head.Length);
-                asyncSendBufferManager.DynamicBufferManager.WriteBuffer(body.GetBuffer(), 0, (int)body.Length);
+                asyncSendBufferManager.DynamicBufferManager.WriteBuffer(body.GetBuffer(), 0, (int)body.Length); 
                 asyncSendBufferManager.EndPacket();
 
                 bool result = true;
