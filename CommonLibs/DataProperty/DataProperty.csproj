@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{2F41665B-0C8D-424B-B73F-D7AD81C7D4A1}</ProjectGuid>
+    <ProjectGuid>{CE3BE9CC-AB55-4CF6-9959-419FCF7ED890}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>IOCPLib</RootNamespace>
-    <AssemblyName>IOCPLib</AssemblyName>
+    <RootNamespace>DataProperty</RootNamespace>
+    <AssemblyName>DataProperty</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -31,9 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="log4net">
-      <HintPath>..\..\ThirdLib\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,21 +40,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IOCP\AsyncSendBufferManager.cs" />
-    <Compile Include="IOCP\AsyncUserTokenPool.cs" />
-    <Compile Include="IOCP\AsyncUserToken.cs" />
-    <Compile Include="IOCP\BufferManager.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="IOCP\DynamicBufferManager.cs" />
-    <Compile Include="IOCP\InvokeElement.cs" />
-    <Compile Include="IOCP\AsyncSocketServer.cs" />
-    <Compile Include="IOCP\Packet.cs" />
-    <Compile Include="IOCP\PacketHead.cs" />
+    <Compile Include="Data.cs" />
+    <Compile Include="DataList.cs" />
+    <Compile Include="DataListManager.cs" />
+    <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="IOCP\SocketAsyncEventArgsPool.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Property.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Logger\Logger.csproj">
+      <Project>{1a5cc1c9-6c28-46bf-a0e3-c7b26363389e}</Project>
+      <Name>Logger</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

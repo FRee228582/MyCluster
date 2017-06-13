@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ClusterManagerServer</RootNamespace>
     <AssemblyName>ClusterManagerServer</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -48,6 +49,14 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\CommonLibs\DataProperty\DataProperty.csproj">
+      <Project>{ce3be9cc-ab55-4cf6-9959-419fcf7ed890}</Project>
+      <Name>DataProperty</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\CommonLibs\DBUtility\DBUtility.csproj">
+      <Project>{d5c5e4aa-87a2-45fd-91b1-b8da8a76257c}</Project>
+      <Name>DBUtility</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\CommonLibs\ServerFrameWork\ServerFrameWork.csproj">
       <Project>{47ae13b1-3343-45e5-bcb4-3728995c1e95}</Project>
       <Name>ServerFrameWork</Name>

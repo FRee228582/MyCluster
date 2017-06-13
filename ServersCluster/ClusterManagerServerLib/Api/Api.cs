@@ -6,6 +6,9 @@ namespace ClusterManagerServerLib
     {
         public override void Init(string[] args)
         {
+            InitPath();
+            InitData();
+            InitDB();
             InitProtocol();
             InitBattleManagerServer();
             InitBattleServer();

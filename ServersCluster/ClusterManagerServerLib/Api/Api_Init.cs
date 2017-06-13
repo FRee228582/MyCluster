@@ -1,14 +1,61 @@
 ﻿using ClusterManagerServerLib.Server;
+using CommonUtility;
+using DataProperty;
+using DBUtility;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
+using System.Windows.Forms;
 
 namespace ClusterManagerServerLib
 {
     public partial class Api
     {
+        void InitPath()
+        {
+            string pathString = string.Empty;
+            string rootPath = string.Empty;
+            if (string.IsNullOrEmpty(pathString))
+            {
+                DirectoryInfo path = new DirectoryInfo(Application.StartupPath);
+                if (path.Parent.Exists)
+                {
+                    rootPath = path.Parent.FullName;
+                }
+                else
+                {
+                    Console.WriteLine("Path is error!Please check the input path!");
+                }
+            }
+            else
+            {
+                rootPath = pathString;
+            }
+            PathMng.SetPath(rootPath);
+        }
+
+        void InitData()
+        {
+            string[] files = Directory.GetFiles(PathMng.FullPathFromData("XML"), "*.xml", SearchOption.AllDirectories);
+            foreach (var file in files)
+            {
+                DataListManager.Inst.Parse(file);
+            }
+        }
+
+        private DBProxy _db;
+        public DBProxy Db { get => _db; }
+
+        void InitDB()
+        {
+            _db = new DBProxy();
+            DataList dbList = DataListManager.Inst.GetDataList("DBConfig");
+            foreach (var item in dbList)
+            {
+                string nickName = item.Value.Name;
+                string dbIp = item.Value.GetString("ip");
+            }
+        }
+
         void InitProtocol()
         {
             Message.Server.BattleManager.Protocol.BM2CM.Api.GenerateId();
@@ -37,6 +84,8 @@ namespace ClusterManagerServerLib
         BattleServer m_BattleServer;
         BattleServer BattleServer1;
         BattleServer BattleServer2;
+
+
         void InitBattleServer()
         {
             m_BattleServer = new BattleServer(this, 8003);
