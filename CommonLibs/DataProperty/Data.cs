@@ -79,6 +79,31 @@ namespace DataProperty
             return prob.GetString();
         }
 
-  
+        public int GetInt(string v)
+        {
+            Property prob = Get(v);
+            if (prob == null)
+            {
+                return -7;
+            }
+            else
+            {
+                return prob.GetInt();
+            }
+        }
+
+        public float GetFloat(string v)
+        {
+            Property prob = Get(v);
+            if (prob == null)
+            {
+                return -7;
+            }
+            else
+            {
+                return prob.GetFloat();
+            }
+        }
+
     }
 }

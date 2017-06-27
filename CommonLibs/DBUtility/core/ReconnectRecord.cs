@@ -16,7 +16,10 @@ namespace DBUtility
         private double m_dMaxConnectTime;
         private bool m_bNeedReconnect = false;
         public bool NeedReconnect
-        { get { return m_bNeedReconnect; } }
+        {
+            get { return m_bNeedReconnect; }
+            set { m_bNeedReconnect = value; }
+        }
         public void Init(double maxConnectTime)
         {
             m_dTryConnectTime = 0.0;

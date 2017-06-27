@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Api\Api.cs" />
     <Compile Include="Api\Api_Init.cs" />
+    <Compile Include="Api\Api_Update.cs" />
     <Compile Include="BattleManagerServer\BMServer.cs" />
     <Compile Include="BattleServer\BattleServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

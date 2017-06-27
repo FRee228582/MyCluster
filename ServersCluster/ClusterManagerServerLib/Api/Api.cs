@@ -10,8 +10,8 @@ namespace ClusterManagerServerLib
             InitData();
             InitDB();
             InitProtocol();
-            InitBattleManagerServer();
-            InitBattleServer();
+            //InitBattleManagerServer();
+            //InitBattleServer();
         }
 
         public override void Exit()
@@ -20,13 +20,15 @@ namespace ClusterManagerServerLib
 
         public override void Update()
         {
-            m_BMServer.Update();
-            BMServer1.Update();
-            BMServer2.Update();
+            //m_BMServer.Update();
+            //BMServer1.Update();
+            //BMServer2.Update();
 
-            m_BattleServer.Update();
-            BattleServer1.Update();
-            BattleServer2.Update();
+            //m_BattleServer.Update();
+            //BattleServer1.Update();
+            //BattleServer2.Update();
+
+            ProcessDBPostUpdate();
         }
 
         public override void ExcuteCommand(string cmd)

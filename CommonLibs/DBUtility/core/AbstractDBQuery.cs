@@ -10,15 +10,28 @@ namespace DBUtility
     public delegate void DBCallback(object msg);
     public abstract class AbstractDBQuery
     {
+        DBManager _dbManager;
+        protected MySqlConnection _conn;
         protected MySqlCommand _cmd;
         protected MySqlDataReader _reader;
         protected object _result;
         public string m_strErrorText;
 
-        internal void Init(MySqlConnection conn)
+        internal void Init(DBManager dbManager)
         {
-            _cmd = conn.CreateCommand();
+            _dbManager = dbManager;
+            _conn = new MySqlConnection(dbManager.ConnStr);
+            _cmd = _conn.CreateCommand();
+            _cmd.Connection = _conn;
             _cmd.CommandTimeout = 0;
+            try
+            {
+                _conn.Open();
+            }
+            catch (Exception e)
+            {
+                dbManager.AddExceptionLog(e.ToString());
+            }
         }
 
         protected DBCallback m_callback;

@@ -57,5 +57,36 @@ namespace DataProperty
             return Value.ToString().Trim();
         }
 
+        public int GetInt()
+        {
+            if (Type == ValueType.STRING)
+            {
+                int ret = 0;
+                int.TryParse(Value.ToString().Trim(), out ret);
+                return ret;
+            }
+            else if (Type == ValueType.FLOAT)
+            {
+                return (int)(float)Value;
+            }
+
+            return (int)Value;
+        }
+
+        public float GetFloat()
+        {
+            if (Type == ValueType.STRING)
+            {
+                float ret = 0.0f;
+                float.TryParse(Value.ToString().Trim(), out ret);
+                return ret;
+            }
+            else if (Type == ValueType.INT)
+            {
+                return (float)(int)Value;
+            }
+
+            return (float)Value;
+        }
     }
 }

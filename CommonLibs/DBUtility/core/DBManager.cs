@@ -17,11 +17,8 @@ namespace DBUtility
         private string _strPort;
         private bool m_bOpened = false;
 
-        private MySqlConnection _conn = null;
-        public MySqlConnection Conn
-        {
-            get { return _conn; }
-        }
+        public string ConnStr = string.Empty;
+
         /// <summary>
         /// 存储
         /// </summary>
@@ -39,12 +36,9 @@ namespace DBUtility
         /// </summary>
         private Queue<string> _exceptionLogQueue = new Queue<string>();
 
-        public ReconnectRecord m_cReconnectInfo;
 
         public bool Init(string ip, string database, string username, string password, string port)
         {
-            m_cReconnectInfo = new ReconnectRecord();
-            m_cReconnectInfo.Init(60 * 1000);
             _saveQueue = new Queue<AbstractDBQuery>();
             _postUpdateQueue = new Queue<AbstractDBQuery>();
 
@@ -54,47 +48,19 @@ namespace DBUtility
             this._strPassword = password;
             this._strPort = port;
 
-            string strConn = string.Format("data source={0}; database={1}; user id={2}; password={3}; port={4}", _strIp, _strDatabase, _strUsername, _strPassword, _strPort);
-            try
-            {
-                _conn = new MySqlConnection(strConn);
-                _conn.Open();
-                m_bOpened = true;
-                return true;
-            }
-            catch (MySqlException e)
-            {
-                LOG.Error(e.ToString());
-                return false;
-            }
+            ConnStr = string.Format("data source={0}; database={1}; user id={2}; password={3}; port={4}", _strIp, _strDatabase, _strUsername, _strPassword, _strPort);
+
+            return true;
 
         }
         public bool Exit()
         {
-            try
-            {
-                if (_conn != null)
-                {
-                    Conn.Close();
-                    m_bOpened = false;
-                    _conn = null;
-                }
-                return true;
-            }
-            catch (MySqlException e)
-            {
-                LOG.Error(e.ToString());
-                return false;
-            }
-        }
-        public bool IsDisconnected()
-        {
-            return (Conn.State == System.Data.ConnectionState.Closed || Conn.State == System.Data.ConnectionState.Broken);
+            return true;
         }
 
         public void AddDBQuery(AbstractDBQuery query)
         {
-            query.Init(Conn);
+            query.Init(this);
             lock (_saveQueue)
             {
                 _saveQueue.Enqueue(query);
@@ -128,77 +94,60 @@ namespace DBUtility
                 {
                     _totaltime += _lasttime;
                 }
-                lock (m_cReconnectInfo)
-                {
-                    if (IsDisconnected() || m_cReconnectInfo.NeedReconnect)
-                    {
-                        m_bOpened = false;
-                        string log = string.Format("disconnect from db{0},eslplased {1} ms", _strDatabase, m_cReconnectInfo.TryConnectTime);
-                        AddExceptionLog(log);
-                        string strConn = string.Format("data source={0}; database={1}; user id={2}; password={3}; port={4}", _strIp, _strDatabase, _strUsername, _strPassword, _strPort);
-                        try
-                        {
-                            _conn = new MySqlConnection(strConn);
-                            _conn.Open();
-                            m_bOpened = true;
-                            m_cReconnectInfo.Reset();
-                        }
-                        catch (MySqlException e)
-                        {
-                            LOG.Error(e.ToString());
-                            AddExceptionLog(e.ToString());
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            lock (_saveQueue)
-                            {
-                                if (_saveQueue.Count == 0)
-                                {
-                                    continue;
-                                }
-                                while (_saveQueue.Count > 0)
-                                {
-                                    AbstractDBQuery query = _saveQueue.Dequeue();
-                                    _executionQueue.Enqueue(query);
-                                }
-                            }
-                            while (_exceptionLogQueue.Count!=0)
-                            {
-                                var query = _executionQueue.Dequeue();
-                                bool success = query.Execute();
-                                if (success==false)
-                                {
-                                    if (query.m_strErrorText!=null)
-                                    {
-                                        AddExceptionLog(query.m_strErrorText);
-                                    }
-                                }
-                                else
-                                {
 
-                                }
-                                tempPostUpdateQueue.Enqueue(query);
-                            }
-                            lock (_postUpdateQueue)
-                            {
-                                while (tempPostUpdateQueue.Count>0)
-                                {
-                                    _postUpdateQueue.Enqueue(tempPostUpdateQueue.Dequeue());
-                                }
-                            }
-                            tempPostUpdateQueue.Clear();
-                        }
-                        catch (Exception e)
+                try
+                {
+                    lock (_saveQueue)
+                    {
+                        if (_saveQueue.Count == 0)
                         {
-                            LOG.Error(e.ToString());
+                            continue;
+                        }
+                        while (_saveQueue.Count > 0)
+                        {
+                            AbstractDBQuery query = _saveQueue.Dequeue();
+                            _executionQueue.Enqueue(query);
                         }
                     }
+                    while (_executionQueue.Count != 0)
+                    {
+                        var query = _executionQueue.Dequeue();
+                        bool success = query.Execute();
+                        if (success == false)
+                        {
+                            if (query.m_strErrorText != null)
+                            {
+                                AddExceptionLog(query.m_strErrorText);
+                            }
+                        }
+                        else
+                        {
+
+                        }
+                        tempPostUpdateQueue.Enqueue(query);
+                    }
+                    lock (_postUpdateQueue)
+                    {
+                        while (tempPostUpdateQueue.Count > 0)
+                        {
+                            _postUpdateQueue.Enqueue(tempPostUpdateQueue.Dequeue());
+                        }
+                    }
+                    tempPostUpdateQueue.Clear();
+                }
+                catch (Exception e)
+                {
+                    LOG.Error(e.ToString());
                 }
             }
         }
+
+        public void Call(AbstractDBQuery query, DBCallback callback = null)
+        {
+            query.OnCall(callback);
+            AddDBQuery(query);
+        }
+
         public void AddExceptionLog(string log)
         {
             lock (_exceptionLogQueue)
@@ -206,31 +155,26 @@ namespace DBUtility
                 _exceptionLogQueue.Enqueue(log);
             }
         }
+
         public Queue<AbstractDBQuery> GetPostUpdateQueue()
         {
-            Queue<AbstractDBQuery> result;//= new Queue<AbstractDBQuery>();
+            Queue<AbstractDBQuery> ret = new Queue<AbstractDBQuery>();
             lock (_postUpdateQueue)
             {
-                //while (_postUpdateQueue.Count>0)
-                //{
-                //    AbstractDBQuery query = _postUpdateQueue.Dequeue();
-                //    result.Enqueue(query);
-                //}
-                if (_postUpdateQueue.Count > 0)
+                while (_postUpdateQueue.Count > 0)
                 {
-                    result = _postUpdateQueue;
-                    _postUpdateQueue = new Queue<AbstractDBQuery>();
-                    return result;
+                    AbstractDBQuery query = _postUpdateQueue.Dequeue();
+                    ret.Enqueue(query);
                 }
             }
-            return null;
+            return ret;
         }
         public Queue<string> GetExceptionLogQueue()
         {
-            Queue<string> result; //= new Queue<string>();
+            Queue<string> result;
             lock (_exceptionLogQueue)
             {
-                if (_exceptionLogQueue.Count>0)
+                if (_exceptionLogQueue.Count > 0)
                 {
                     result = _exceptionLogQueue;
                     _exceptionLogQueue = new Queue<string>();
@@ -239,10 +183,20 @@ namespace DBUtility
             }
             return null;
         }
-        public void Call(AbstractDBQuery query,DBCallback callback=null)
+
+        public MySqlConnection GetOneConnection()
         {
-            query.OnCall(callback);
-            AddDBQuery(query);
+            try
+            {
+                MySqlConnection conn = new MySqlConnection(ConnStr);
+                return conn;
+            }
+            catch (MySqlException e)
+            {
+                LOG.Error(e.ToString());
+                return null;
+            }
+
         }
     }
 }

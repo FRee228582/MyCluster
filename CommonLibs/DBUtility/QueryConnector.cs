@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DBUtility
 {
-    class QueryConnector:AbstractDBQuery
+    public class QueryConnector:AbstractDBQuery
     {
         public override bool Execute()
         {
@@ -29,6 +29,7 @@ namespace DBUtility
                 {
                     _reader.Close();
                 }
+                _conn.Close();
             }
             return true;
         }
