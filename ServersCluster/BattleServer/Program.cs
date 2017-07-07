@@ -23,7 +23,7 @@ namespace BattleServer
 
         static void SingleServer(string[] args)
         {
-            AbstractServer api = new Api();
+            AbstractBaseServer api = new Api();
             try
             {
                 api.ServerName = "BattleServer";

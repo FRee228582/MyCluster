@@ -318,7 +318,7 @@ namespace TcpLib.TcpSrc
 
         public delegate bool AsyncConnectCallback(bool ret);
         public delegate bool AsyncAcceptCallback(bool ret);
-        public delegate void AsyncReadCallback(MemoryStream stream);
+        public delegate void AsyncRecvCallback(MemoryStream stream);
         public delegate bool AsyncDisconnectCallback();
 
         private AsyncConnectCallback onConnet = DefaultOnConnect;
@@ -335,8 +335,8 @@ namespace TcpLib.TcpSrc
             get { return onAccept; }
         }
 
-        private AsyncReadCallback onRecv = DefaultOnRecv;
-        public AsyncReadCallback OnRecv
+        private AsyncRecvCallback onRecv = DefaultOnRecv;
+        public AsyncRecvCallback OnRecv
         {
             set { onRecv = value; }
             get { return onRecv; }

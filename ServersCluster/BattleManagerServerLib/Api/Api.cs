@@ -3,7 +3,7 @@ using System;
 
 namespace BattleManagerServerLib
 {
-    public partial class Api:AbstractServer
+    public partial class Api:AbstractBaseServer
     {
 
         public override void Init(string[] args)
@@ -18,7 +18,6 @@ namespace BattleManagerServerLib
             {
 
             }
-            InitLogger();
             InitProtocol();
 
             //InitClusterManagerServer();

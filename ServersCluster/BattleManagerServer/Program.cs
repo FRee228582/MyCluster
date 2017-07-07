@@ -9,7 +9,7 @@ namespace BattleManagerServer
     {
         static void Main(string[] args)
         {
-            AbstractServer api = new Api();
+            AbstractBaseServer api = new Api();
             try
             {
                 api.ServerName = "BattleManagerServer";

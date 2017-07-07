@@ -15,7 +15,6 @@ namespace DBUtility
         private string _strUsername;
         private string _strPassword;
         private string _strPort;
-        private bool m_bOpened = false;
 
         public string ConnStr = string.Empty;
 
@@ -53,6 +52,7 @@ namespace DBUtility
             return true;
 
         }
+
         public bool Exit()
         {
             return true;
@@ -169,6 +169,7 @@ namespace DBUtility
             }
             return ret;
         }
+
         public Queue<string> GetExceptionLogQueue()
         {
             Queue<string> result;
