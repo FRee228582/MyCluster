@@ -240,3 +240,20 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/Protocol/BuildClientProtocol/Gate/Protocol/GateC.code.pb.h
+/Protocol/BuildClientProtocol/Gate/Protocol/GateC.code.pb.cc
+/Protocol/BuildServerProtocol/BattleManager/Protocol/BM2CM.CODE.pb.h
+/Protocol/BuildServerProtocol/BattleManager/Protocol/BM2CM.CODE.pb.cc
+/Protocol/BuildServerProtocol/BattleManager/Protocol/BM2B.CODE.pb.h
+/Protocol/BuildServerProtocol/BattleManager/Protocol/BM2B.CODE.pb.cc
+/Protocol/BuildServerProtocol/ClusterManager/Protocol/CM2BM.CODE.pb.h
+/Protocol/BuildServerProtocol/ClusterManager/Protocol/CM2BM.CODE.pb.cc
+/Protocol/BuildServerProtocol/ClusterManager/Protocol/CM2B.CODE.pb.h
+/Protocol/BuildServerProtocol/ClusterManager/Protocol/CM2B.CODE.pb.cc
+/Protocol/protobuf-net-master
+/Protocol/Protobuf-net/CoreOnly
+/Protocol/protobuf-csharp-3.3.0/protobuf-3.3.0
+/Protocol/TestProtoBuff
+/Protocol/protobuf-csharp-3.3.0.zip
+/Protocol/protobuf-net-master.zip
+/Protocol/Protobuf-net.zip

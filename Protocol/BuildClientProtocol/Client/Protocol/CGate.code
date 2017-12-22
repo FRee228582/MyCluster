@@ -1,5 +1,11 @@
 package Message.Client.Gate.Protocol.CGate;
-module Client.Gate.Protocol.CGate 0x98000000;
+module Client.Gate.Protocol.CGate 0x9800000;
+
 //===================================================================
 //===========================Client=>Gate============================
 //===================================================================
+
+message MSG_TEST 0x9800001
+{
+	repeated int32 A = 1;
+}
